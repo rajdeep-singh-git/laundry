@@ -11,11 +11,11 @@ exports.sendError = (res, err) => {
 }
 
 exports.sendPayloadError = (res, err) => {
-    console.log(params.error)
-    return res.status(422).send({
-        status: 422,
+    console.log(err)
+    return res.status(400).send({
+        status: 400,
         error: {
-            message: "Invalid Payload"
+            message: err.message.replaceAll('"', "")
         }
     })
 }

@@ -1,9 +1,9 @@
 const MESSAGES = {
-    "INVALID_CREDENTIALS": "Invalid username or password",
-    "STATUS_UPDATED": "Status updated successfully",
-    "BATCH_NOT_FOUND": "Batch not found",
-    "CLIENT_ADDED": "Client added successfully",
-    "BATCH_ADDED": "Batch added successfully"
+    INVALID_CREDENTIALS: "Invalid username or password",
+    STATUS_UPDATED: "Status updated successfully",
+    BATCH_NOT_FOUND: "Batch not found",
+    CLIENT_ADDED: "Client added successfully",
+    BATCH_ADDED: "Batch added successfully"
 }
 
 exports.MESSAGES = MESSAGES;
@@ -22,7 +22,12 @@ exports.BATCH_STATUS = {
     IRONED: 'Ironed',
     IRONING: 'Ironing',
     READY_FOR_PICKUP: 'Ready for Pickup',
-    WAITING_FOR_WASHING: 'Waiting for Washing',
+    WAITING_FOR_WASHING: 'Waiting for Processing',
     WASHED: 'Washed',
     WASHING: 'Washing'
+}
+
+exports.ROLES = {
+    ADMIN: "admin",
+    CLIENT: "client"
 }

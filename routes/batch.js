@@ -65,8 +65,7 @@ exports.getBatchDetailsByTag = async (req, res) => {
     batch.batch = batch.batch.map(batchItem => {
         return {
             name: batch_items_obj[batchItem.itemId],
-            count: batchItem.count,
-            needIroning: batchItem.needIroning
+            ...batchItem
         }
     });
 

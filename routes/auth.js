@@ -40,7 +40,11 @@ exports.login = (req, res) => {
         const token = jwt.sign(payLoad, JWT_SECRET, { expiresIn: JWT_TOKEN_EXPIRY });
 
         res.send({
-            token
+            token,
+            profile: {
+                name: user.name,
+                role: user.role
+            }
         })
     })
 
@@ -49,6 +53,8 @@ exports.login = (req, res) => {
 function sendInvalidResponse(res) {
     res.status(401).send({
         status: 401,
-        message: MESSAGES.INVALID_CREDENTIALS
+        error: {
+            message: MESSAGES.INVALID_CREDENTIALS
+        }
     })
 }

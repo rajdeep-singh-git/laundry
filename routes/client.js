@@ -1,9 +1,9 @@
 const db = require('../config/db');
 const { sendError, sendPayloadError } = require('../utils/common');
 const Joi = require('joi');
-const { MESSAGES } = require('../utils/enums');
+const { MESSAGES, ROLES } = require('../utils/enums');
 
-exports.addClient = (req, res) => {
+exports.addClient = async (req, res) => {
 
 
     const personSchema = Joi.object({
@@ -23,7 +23,28 @@ exports.addClient = (req, res) => {
 
     const { name, email, phone, city, state } = params.value;
 
-    db.query(`insert into users(name,email,phone,city,state,role) values(?)`, [[name, email, phone, city, state, 2]], (err, result) => {
+    const clients = await db.executeQuery(`select email,phone from users where email=? or phone=? and role=2`, [email, phone]);
+
+    const errors = [];
+
+    if (clients.length > 0) {
+        if (clients[0].email == email) {
+            errors.push("Email already exists");
+        }
+        if (clients[0].phone == phone) {
+            errors.push("Phone already exisys");
+        }
+    }
+
+    if (errors.length > 0) {
+        return res.status(400).send({
+            status: 400,
+            error: errors
+        });
+    }
+
+
+    db.query(`insert into users(name,email,phone,city,state,role) values(?)`, [[name, email, phone, city, state, role]], (err, result) => {
         if (err) {
             return sendError(res, err);
         }
@@ -41,12 +62,10 @@ exports.getClientsByFilters = (req, res) => {
 
 
     const personSchema = Joi.object({
-        name: Joi.string().optional(),
-        email: Joi.string().optional(),
-        phone: Joi.string().optional(),
+        search: Joi.string().optional().allow("", null),
         pagination: Joi.object({
-            page: Joi.number(),
-            perPage: Joi.number()
+            page: Joi.number().integer().min(1),
+            perPage: Joi.number().integer().min(1)
         }).required()
     });
 
@@ -56,24 +75,25 @@ exports.getClientsByFilters = (req, res) => {
         return sendPayloadError(res, params.error);
     }
 
-    const { name, email, phone, pagination } = params.value;
+    const { search, pagination } = params.value;
 
     let whereQuery = " where role=2";
 
-    if (name && name.trim()) {
-        whereQuery += ` and name like '%${name}%'`;
+    if (search && search.trim()) {
+
+        if (/^[A-Z\sa-z]+$/.test(search)) {
+            whereQuery += ` and name like '%${search}%'`;
+        } else if (search.includes('@')) {
+            whereQuery += ` and email like '%${search}%'`;
+        } else if (/\d/.test(search)) {
+            whereQuery += ` and phone like '%${search}%'`;
+        }
+
     }
 
-    if (email && email.trim()) {
-        whereQuery += ` and email like '%${email}%'`;
-    }
+    const limit = pagination.perPage
+    const offset = ((pagination.page - 1) * limit);
 
-    if (phone && phone.trim()) {
-        whereQuery += ` and phone like '%${phone}%'`;
-    }
-
-    const limit = pagination.perPage || 10
-    const offset = ((pagination.page - 1) * limit) || 0;
 
     db.query(`select id,name,email,phone,city,state,role from users ${whereQuery}  limit ${offset}, ${limit} `, (err, result) => {
         if (err) {
@@ -90,15 +110,31 @@ exports.addBatch = (req, res) => {
 
     const batchItemSchema = Joi.object({
         itemId: Joi.number().integer().required(),
-        count: Joi.number().integer().min(1).required(),
-        needIroning: Joi.boolean().required(),
+        iron: Joi.object({
+            cost: Joi.number().required(),
+            customPrice: Joi.boolean(),
+            remarks: Joi.string()
+        }),
+        wash: Joi.object({
+            cost: Joi.number().required(),
+            customPrice: Joi.boolean(),
+            remarks: Joi.string()
+        }),
+        dry: Joi.object({
+            cost: Joi.number().required(),
+            customPrice: Joi.boolean(),
+            remarks: Joi.string()
+        }),
+        totalCost: Joi.number().required(),
+        size: Joi.string().required(),
     });
 
     const schema = Joi.object({
         clientId: Joi.number().integer().required(),
         batch: Joi.array().items(batchItemSchema).min(1).required(),
         dueDate: Joi.string().isoDate().required(),
-        tagId: Joi.string().required()
+        tagId: Joi.string().required(),
+        batchCost: Joi.number().required()
     });
 
     const params = schema.validate(req.body);
@@ -107,14 +143,14 @@ exports.addBatch = (req, res) => {
         return sendPayloadError(res, params.error);
     }
 
-    const { clientId, batch, dueDate, tagId, cost } = params.value;
+    const { clientId, batch, dueDate, tagId, batchCost } = params.value;
 
     const insertDate = [
         clientId,
         JSON.stringify(batch),
         dueDate,
         tagId,
-        cost
+        batchCost
     ]
 
     db.query(`insert into client_batch(clientId,batch,dueDate,tagId,cost) values(?) `, [insertDate], (err, result) => {
@@ -135,7 +171,7 @@ exports.getClientsBatches = async (req, res) => {
 
     const { clientId } = req.params;
 
-    const batches = await db.executeQuery(`select batch,bs.status as currentStatus,dueDate,tagId from client_batch cb left join batch_status bs on bs.id=cb.currentStatus where clientId=? order by cb.id desc `, clientId);
+    const batches = await db.executeQuery(`select batch,bs.status as currentStatus,dueDate,tagId,cost from client_batch cb left join batch_status bs on bs.id=cb.currentStatus where clientId=? order by cb.id desc `, clientId);
 
     batches.forEach(batch => {
         batch.batch = JSON.parse(batch.batch)
@@ -154,7 +190,7 @@ exports.getClientsBatches = async (req, res) => {
 
                 return {
                     name: batch_items_obj[batchItem.itemId],
-                    count: batchItem.count
+                    ...batchItem
                 }
             })
         })
