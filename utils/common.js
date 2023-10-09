@@ -19,3 +19,7 @@ exports.sendPayloadError = (res, err) => {
         }
     })
 }
+
+exports.getConfigurations = async (...configNames) => {
+    return await db.executeQuery('select feature,value from configurations where feature in (?)', [...configNames])
+}

@@ -1,6 +1,7 @@
 const db = require('../config/db');
-const { sendError, sendPayloadError } = require('../utils/common');
-const { MESSAGES } = require('../utils/enums');
+const { sendError, sendPayloadError, getConfigurations } = require('../utils/common');
+const { MESSAGES, CONFIGURATIONS, BATCH_STATUS } = require('../utils/enums');
+const moment = require('moment');
 
 /**
  * Get batch items like 'Shirt' or 'Jean' etc in array of objects
@@ -26,7 +27,7 @@ exports.updateBatchStatus = async (req, res) => {
     const { status } = req.body;
     const { batchId } = req.params;
 
-    db.query(`update client_batch set currentStatus = ? where id=?`, [status, batchId], (err, result) => {
+    db.query(`update client_batch set currentStatus=?, updatedAt=now() where id=?`, [status, batchId], (err, result) => {
         if (err) {
             return sendError(res, err);
         }
@@ -69,6 +70,18 @@ exports.getBatchDetailsByTag = async (req, res) => {
         }
     });
 
+    const CONFIG_VALUE = {};
+    const configurations = await getConfigurations([CONFIGURATIONS.TAX_ON_BILL, CONFIGURATIONS.LATE_PICKUP_FEE, CONFIGURATIONS.LATE_DAYS]);
+    configurations.forEach(c => CONFIG_VALUE[c.feature] = JSON.parse(c.value));
+
+    batch.taxAmount = batch.cost / 100 * CONFIG_VALUE[CONFIGURATIONS.TAX_ON_BILL];
+
+    if (batch.status == BATCH_STATUS.READY_FOR_PICKUP) {
+        const lateDays = moment().diff(moment(batch.dueDate), 'days');
+        if (lateDays > CONFIGURATIONS.LATE_DAYS) {
+            batch.lateFee = CONFIG_VALUE[CONFIGURATIONS.LATE_PICKUP_FEE];
+        }
+    }
 
     res.send(batch)
 
