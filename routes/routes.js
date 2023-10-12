@@ -8,11 +8,13 @@ const router = Router();
 router.post('/login', auth.login);
 
 router.post('/clients', client.addClient);
-router.post('/clients/search', client.getClientsByFilters);
+router.put('/clients/:clientId', client.updateClient);
+router.get('/clients', client.getClientsByFilters);
 router.get('/batch/items', batch.getBatchItems);
-router.post('/clients/batch', client.addBatch);
+router.post('/clients/:clientId/batch', client.addBatch);
 router.get('/clients/:clientId/batches', client.getClientsBatches);
-router.put('/batch/:batchId', batch.updateBatchStatus);
+router.put('/batch/:batchId/status', batch.updateBatchStatus);
+router.put('/batch/:batchId', batch.updateBatch);
 router.get('/batch/tags/:tagId', batch.getBatchDetailsByTag);
 
 module.exports = router;

@@ -2,16 +2,27 @@ const db = require('../config/db');
 const bcrypt = require('bcrypt');
 const { JWT_SECRET, JWT_TOKEN_EXPIRY } = require('../env');
 const jwt = require('jsonwebtoken');
-const { sendError } = require('../utils/common');
+const { sendError, sendPayloadError } = require('../utils/common');
 const { MESSAGES } = require('../utils/enums');
-
-
+const Joi = require('joi');
+const { StatusCodes } = require('http-status-codes');
 
 exports.login = (req, res) => {
 
-    const { username, password } = req.body;
+    const schema = Joi.object({
+        username: Joi.string().required(),
+        password: Joi.string().required()
+    });
 
-    db.query('select * from users where username=?', username, async (err, result) => {
+    const params = schema.validate(req.body);
+
+    if (params.error) {
+        return sendPayloadError(res, params.error);
+    }
+
+    const { username, password } = params.value;
+
+    db.query('select u.name,u.password,u.id,r.role from users u inner join roles r on r.id=u.id where u.username=?', username, async (err, result) => {
 
         if (err) {
             return sendError(res, err);
@@ -51,8 +62,8 @@ exports.login = (req, res) => {
 }
 
 function sendInvalidResponse(res) {
-    res.status(401).send({
-        status: 401,
+    res.status(StatusCodes.UNAUTHORIZED).send({
+        status: StatusCodes.UNAUTHORIZED,
         error: {
             message: MESSAGES.INVALID_CREDENTIALS
         }
