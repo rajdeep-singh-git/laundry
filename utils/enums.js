@@ -9,7 +9,8 @@ exports.MESSAGES = {
     PHONE_EXISTS: "Phone already exists",
     EMAIL_EXISTS: "Email already exists",
     BAD_REQUEST: "Bad Request",
-    CLIENT_NOT_FOUND: "Client does not exist"
+    CLIENT_NOT_FOUND: "Client does not exist",
+    PAGE_NOT_FOUND: "Page not found"
 }
 
 
