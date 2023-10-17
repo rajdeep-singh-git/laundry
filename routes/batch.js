@@ -224,7 +224,7 @@ exports.updateBatch = async (req, res) => {
 
     const batchItemIds = batch.map(b => b.itemId);
 
-    const batchItems = (await db.executeQuery(`select id from batch_items where id in(?)`, batchItemIds));
+    const batchItems = (await db.executeQuery(`select id from batch_items where id in(?)`, [batchItemIds]));
     const invalidBatchIdErrors = [];
 
     batchItemIds.forEach((itemId, index) => {
@@ -274,4 +274,13 @@ exports.updateBatch = async (req, res) => {
     });
 
 
+}
+
+exports.getBatchStatus = (req, res) => {
+    db.query(`select * from batch_status`, (err, result) => {
+        res.send({
+            status: StatusCodes.OK,
+            records: result
+        })
+    })
 }

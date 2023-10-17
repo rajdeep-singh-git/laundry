@@ -5,9 +5,11 @@ const batch = require('./batch');
 const router = Router();
 const { StatusCodes } = require('http-status-codes');
 const { MESSAGES } = require('../utils/enums');
+const { validateToken } = require('../middlewares/auth');
 
 // Authorization related routes
 router.post('/login', auth.login);
+router.use(validateToken);
 
 router.post('/clients', client.addClient);
 router.put('/clients/:clientId', client.updateClient);
@@ -18,6 +20,7 @@ router.get('/clients/:clientId/batches', client.getClientsBatches);
 router.put('/batch/:batchId/status', batch.updateBatchStatus);
 router.put('/batch/:batchId', batch.updateBatch);
 router.get('/batch/tags/:tagId', batch.getBatchDetailsByTag);
+router.get('/batch/statuses', batch.getBatchStatus);
 
 router.all('**', (req, res) => {
     res.status(StatusCodes.NOT_FOUND).send({

@@ -138,8 +138,8 @@ exports.getClientsByFilters = async (req, res) => {
         search: Joi.string().optional().allow(null, ""),
         page: Joi.number().integer().min(1),
         perPage: Joi.number().integer().min(1),
-        sortBy: Joi.string().valid(...Object.values(USERS_COLUMMS)),
-        sortOrder: Joi.string().valid(...Object.values(ORDER_BY_STATUSES))
+        sortBy: Joi.string().valid("", ...Object.values(USERS_COLUMMS)),
+        sortOrder: Joi.string().valid("", ...Object.values(ORDER_BY_STATUSES))
     });
 
     const params = querySchema.validate(req.query);
@@ -239,7 +239,7 @@ exports.addBatch = async (req, res) => {
 
     const batchItemIds = batch.map(b => b.itemId);
 
-    const batchItems = (await db.executeQuery(`select id from batch_items where id in(?)`, batchItemIds));
+    const batchItems = (await db.executeQuery(`select id from batch_items where id in(?)`, [batchItemIds]));
     const invalidBatchIdErrors = [];
 
     batchItemIds.forEach((itemId, index) => {
@@ -317,8 +317,8 @@ exports.getClientsBatches = async (req, res) => {
         clientId: Joi.number().integer().min(1),
         page: Joi.number().integer().min(1),
         perPage: Joi.number().integer().min(1),
-        sortBy: Joi.string().valid('tagId', 'currentStatus', 'cost', 'dueDate', 'id'),
-        sortOrder: Joi.string().valid(...Object.values(ORDER_BY_STATUSES))
+        sortBy: Joi.string().valid('', 'tagId', 'currentStatus', 'cost', 'dueDate', 'id'),
+        sortOrder: Joi.string().valid('', ...Object.values(ORDER_BY_STATUSES))
     });
 
     req.query.clientId = req.params.clientId;

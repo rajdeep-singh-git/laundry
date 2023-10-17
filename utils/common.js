@@ -27,6 +27,8 @@ exports.getConfigurations = async (...configNames) => {
     return await db.executeQuery('select feature,value from configurations where feature in (?)', [...configNames])
 }
 
+
+
 exports.batchItemSchema = Joi.object({
     itemId: Joi.number().integer().min(1).required(),
     iron: Joi.object({
@@ -57,6 +59,11 @@ exports.personSchema = Joi.object({
     state: Joi.string().optional(),
 });
 
+
+/**
+ * Send email with subject, to, message and callback
+ * @param {*} param0 
+ */
 exports.sendEmail = ({ to, subject, message, callback }) => {
     const transporter = nodemailer.createTransport({
         service: "gmail",
